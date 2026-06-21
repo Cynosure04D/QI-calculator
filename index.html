@@ -92,7 +92,6 @@
     }
 
     .password-input-wrap{
-        position:relative;
         margin-bottom:10px;
     }
 
@@ -101,36 +100,15 @@
         text-align:center;
         font-size:1rem;
         letter-spacing:0.12em;
-        padding-right:48px;
     }
 
-    .password-toggle{
-        position:absolute;
-        right:10px;
-        top:20%;
-        background:transparent;
-        border:none;
-        color:var(--muted);
-        cursor:pointer;
-        display:flex;
-        align-items:center;
-        justify-content:right;
-        border-radius:999px;
-        padding:0;
-    }
-
-    .password-toggle:hover{
+    .password-show-btn{
+        width:100%;
+        margin:0 0 6px 0;
+        background:#eef4ff;
         color:var(--accent);
-    }
-
-    .password-toggle svg{
-        width:18px;
-        height:18px;
-        stroke:currentColor;
-        stroke-width:1.8;
-        fill:none;
-        stroke-linecap:round;
-        stroke-linejoin:round;
+        font-size:0.9rem;
+        padding:9px 12px;
     }
 
     .password-box button{
@@ -526,15 +504,10 @@
         <p>Please enter the password to continue</p>
         <div class="password-input-wrap">
             <input type="password" id="passwordInput" placeholder="Enter password">
-            <button class="password-toggle" id="passwordToggle" aria-label="Show password">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            </button>
         </div>
-        <div class="password-error" id="passwordError"></div>
+        <button class="password-show-btn" id="passwordShowBtn" type="button">Show Password</button>
         <button class="btn-primary" id="passwordSubmit" type="button">Unlock</button>
+        <div class="password-error" id="passwordError"></div>
     </div>
 </div>
 <!-- PASSWORD GATE END -->
@@ -707,7 +680,7 @@
     /* PASSWORD GATE START - remove this block if you don't want protection */
     const passwordOverlay = document.getElementById('passwordOverlay');
     const passwordInput = document.getElementById('passwordInput');
-    const passwordToggle = document.getElementById('passwordToggle');
+    const passwordShowBtn = document.getElementById('passwordShowBtn');
     const passwordError = document.getElementById('passwordError');
     const passwordSubmit = document.getElementById('passwordSubmit');
     const appContainer = document.getElementById('appContainer');
@@ -724,24 +697,10 @@
         }
     }
 
-    const eyeOpen = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-        </svg>`;
-    const eyeClosed = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 3 21 21"></path>
-            <path d="M10.6 6.3A9.8 9.8 0 0 1 12 6c7 0 11 6 11 6a18.4 18.4 0 0 1-4.2 4.7"></path>
-            <path d="M6.8 8.2A17.7 17.7 0 0 0 1 12s4 7 11 7a10.7 10.7 0 0 0 4.4-1"></path>
-            <path d="M9.3 13.7a3 3 0 0 0 4.2 4.2"></path>
-        </svg>`;
-
-    passwordToggle.addEventListener('click', () => {
+    passwordShowBtn.addEventListener('click', () => {
         const isHidden = passwordInput.type === 'password';
         passwordInput.type = isHidden ? 'text' : 'password';
-        passwordToggle.innerHTML = isHidden ? eyeClosed : eyeOpen;
-        passwordToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        passwordShowBtn.textContent = isHidden ? 'Hide Password' : 'Show Password';
     });
 
     passwordSubmit.addEventListener('click', unlockPage);
