@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QI Calculator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+    :root {
+        --bg: #eef3f9;
+        --surface: #ffffff;
+        --surface-2: #f7f9fc;
+        --text: #10223f;
+        --muted: #5e6d8c;
+        --accent: #0f66ff;
+        --accent-2: #0ea5a5;
+        --border: #d9e2f0;
+        --success: #16a34a;
+        --warning: #f59e0b;
+        --danger: #dc2626;
+        --shadow: 0 12px 30px rgba(16, 34, 63, 0.08);
+    }
+
+    body.dark-mode {
+        --bg: #0f172a;
+        --surface: #11203d;
+        --surface-2: #162b56;
+        --text: #eef6ff;
+        --muted: #b6caed;
+        --accent: #68a8ff;
+        --accent-2: #2dd4bf;
+        --border: #294173;
+        --success: #22c55e;
+        --warning: #fbbf24;
+        --danger: #f87171;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    *{
+        box-sizing:border-box;
+        margin:0;
+        padding:0;
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    body{
+        background:
+            radial-gradient(circle at top, rgba(15, 102, 255, 0.08), transparent 18%),
+            var(--bg);
+        color:var(--text);
+        padding:18px;
+        transition:0.3s ease;
+    }
+
+    /* PASSWORD GATE START - remove this block if you don't want protection */
+    .password-overlay{
+        position:fixed;
+        inset:0;
+        background:
+            radial-gradient(circle at top, rgba(15, 102, 255, 0.12), transparent 18%),
+            rgba(7, 12, 24, 0.82);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+        padding:20px;
+    }
+
+    .password-box{
+        width:min(460px, 100%);
+        background:linear-gradient(180deg, var(--surface), var(--surface-2));
+        border:1px solid var(--border);
+        border-radius:22px;
+        padding:32px 28px;
+        box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.32),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        text-align:center;
+    }
+
+    .password-box h3{
+        margin-bottom:10px;
+        color:var(--text);
+        font-size:1.5rem;
+        letter-spacing:0.02em;
+    }
+
+    .password-box p{
+        color:var(--muted);
+        margin-bottom:18px;
+        font-size:0.95rem;
+    }
+
+    .password-input-wrap{
+        position:relative;
+        margin-bottom:10px;
+    }
+
+    .password-input-wrap input{
+        width:100%;
+        text-align:center;
+        font-size:1rem;
+        letter-spacing:0.12em;
+        padding-right:48px;
+    }
+
+    .password-toggle{
+        position:absolute;
+        right:10px;
+        top:20%;
+        background:transparent;
+        border:none;
+        color:var(--muted);
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        justify-content:right;
+        border-radius:999px;
+        padding:0;
+    }
+
+    .password-toggle:hover{
+        color:var(--accent);
+    }
+
+    .password-toggle svg{
+        width:18px;
+        height:18px;
+        stroke:currentColor;
+        stroke-width:1.8;
+        fill:none;
+        stroke-linecap:round;
+        stroke-linejoin:round;
+    }
+
+    .password-box button{
+        width:100%;
+        margin-top:6px;
+    }
+
+    .password-error{
+        min-height:20px;
+        color:var(--danger);
+        font-size:0.9rem;
+        font-weight:700;
+        margin-bottom:8px;
+    }
+    /* PASSWORD GATE END */
+
+    .container{
+        max-width:1380px;
+        margin:auto;
+        padding:6px 0 26px;
+    }
+
+    .top-bar{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        margin-bottom:18px;
+        flex-wrap:wrap;
+    }
+
+    .title-wrap h1{
+        font-size:2rem;
+        color:var(--text);
+        letter-spacing:0.02em;
+    }
+
+    .header-controls{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    .clock-pill{
+        background:linear-gradient(180deg, var(--surface), var(--surface-2));
+        padding:10px 14px;
+        border-radius:999px;
+        border:1px solid var(--border);
+        box-shadow:var(--shadow);
+        color:var(--muted);
+        font-weight:700;
+        white-space:nowrap;
+    }
+
+    .theme-btn{
+        position:static;
+        width:54px;
+        height:54px;
+        border:none;
+        border-radius:50%;
+        background:linear-gradient(135deg, var(--accent), var(--accent-2));
+        color:white;
+        font-size:1.1rem;
+        cursor:pointer;
+        box-shadow:var(--shadow);
+        transition:box-shadow 0.15s ease;
+    }
+
+    .theme-btn:hover{
+        box-shadow:0 10px 22px rgba(15, 102, 255, 0.24);
+    }
+
+    .card{
+        background:linear-gradient(180deg, var(--surface), var(--surface-2));
+        border-radius:18px;
+        padding:18px;
+        margin-bottom:18px;
+        box-shadow:var(--shadow);
+        border:1px solid var(--border);
+        transition:box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .card:hover{
+        border-color:var(--accent);
+        box-shadow:0 14px 32px rgba(16, 34, 63, 0.1);
+    }
+
+    .section-head{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+        margin-bottom:12px;
+    }
+
+    .section-head h2,
+    .section-head h3{
+        font-size:1.1rem;
+        color:var(--text);
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+        gap:14px;
+    }
+
+    label{
+        display:block;
+        font-weight:700;
+        margin-bottom:6px;
+        color:var(--muted);
+        font-size:0.92rem;
+    }
+
+    input, select{
+        width:100%;
+        padding:11px 12px;
+        border:1px solid var(--border);
+        background:linear-gradient(180deg, var(--surface), var(--surface-2));
+        color:var(--text);
+        border-radius:10px;
+        outline:none;
+        transition:0.2s;
+        font-size:0.95rem;
+    }
+
+    input:focus, select:focus{
+        border-color:var(--accent);
+        box-shadow:0 0 0 3px rgba(15, 102, 255, 0.12);
+    }
+
+    .actions{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-top:14px;
+        flex-wrap:wrap;
+    }
+
+    .button-row{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+    }
+
+    button{
+        border:none;
+        border-radius:10px;
+        padding:10px 14px;
+        font-weight:800;
+        cursor:pointer;
+        transition:box-shadow 0.15s ease, background 0.15s ease;
+        letter-spacing:0.01em;
+    }
+
+    .btn-primary{
+        background:linear-gradient(90deg, var(--accent), #1d78ff);
+        color:white;
+        box-shadow:0 6px 16px rgba(15, 102, 255, 0.18);
+    }
+
+    .btn-secondary{
+        background:#e9eefc;
+        color:var(--accent);
+    }
+
+    .btn-danger{
+        background:#fee2e2;
+        color:var(--danger);
+    }
+
+    .checkbox-row{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        color:var(--muted);
+        font-size:0.95rem;
+        white-space:nowrap;
+        flex-wrap:nowrap;
+        font-weight:600;
+    }
+
+    .checkbox-row input{
+        width:16px;
+        height:16px;
+        accent-color:var(--accent);
+        margin:0;
+    }
+
+    .status-message{
+        min-height:22px;
+        font-size:0.92rem;
+        color:var(--danger);
+        margin-top:8px;
+        font-weight:700;
+        letter-spacing:0.01em;
+    }
+
+    .score-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+        gap:14px;
+        margin-bottom:18px;
+    }
+
+    .score-card{
+        background:linear-gradient(180deg, var(--surface), var(--surface-2));
+        border-radius:14px;
+        border:1px solid var(--border);
+        padding:14px;
+        text-align:center;
+        box-shadow:var(--shadow);
+        transition:box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .score-card:hover{
+        border-color:var(--accent);
+        background:linear-gradient(180deg, var(--surface), #eef5ff);
+        box-shadow:0 10px 22px rgba(16, 34, 63, 0.12);
+    }
+
+    .score-card:hover .score-title{
+        color:var(--text);
+        font-weight:700;
+    }
+
+    .score-card:hover .score-value{
+        color:var(--accent);
+        font-weight:900;
+    }
+
+    .score-title{
+        font-size:0.9rem;
+        color:var(--muted);
+        transition:color 0.18s ease, font-weight 0.18s ease;
+    }
+
+    .score-value{
+        font-size:1.7rem;
+        font-weight:800;
+        margin-top:6px;
+        color:var(--text);
+        transition:color 0.18s ease, font-weight 0.18s ease;
+    }
+
+    .result{
+        text-align:center;
+        max-width:100%;
+        margin-top:0;
+        background:linear-gradient(180deg, var(--surface), #f7faff);
+        transition:box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .result:hover{
+        box-shadow:0 0 0 1px rgba(15, 102, 255, 0.08), 0 10px 24px rgba(15, 102, 255, 0.08);
+        border-color:var(--accent);
+    }
+
+    .result:hover .qi,
+    .result:hover .total,
+    .result:hover .grade{
+        text-shadow:0 0 10px rgba(15, 102, 255, 0.18);
+    }
+
+    .result:hover .progress-bar{
+        filter:drop-shadow(0 0 8px rgba(15, 102, 255, 0.6));
+    }
+
+    .result:hover .progress-bar.red{
+        filter:drop-shadow(0 0 10px rgba(220, 38, 38, 0.6));
+    }
+
+    .result:hover .progress-bar.yellow{
+        filter:drop-shadow(0 0 10px rgba(245, 158, 11, 0.6));
+    }
+
+    .result:hover .progress-bar.green{
+        filter:drop-shadow(0 0 10px rgba(22, 163, 74, 0.6));
+    }
+
+    .qi{
+        font-size:4rem;
+        font-weight:900;
+        margin-top:12px;
+    }
+
+    .total{
+        font-size:1.4rem;
+        margin-top:10px;
+    }
+
+    .grade{
+        font-size:1.3rem;
+        font-weight:800;
+        margin-top:10px;
+    }
+
+    .progress{
+        width:100%;
+        height:20px;
+        background:#dfe7f3;
+        border-radius:999px;
+        overflow:hidden;
+        margin-top:14px;
+        box-shadow:inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .result .progress{
+        max-width:920px;
+        margin-left:auto;
+        margin-right:auto;
+    }
+
+    body.dark-mode .progress{
+        background:#23355e;
+    }
+
+    .progress-bar{
+        height:100%;
+        width:0%;
+        transition:0.3s;
+    }
+
+    .green{background:var(--success);}
+    .yellow{background:var(--warning);}
+    .red{background:var(--danger);}
+    .blue{background:var(--accent);}
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+        overflow:hidden;
+        border-radius:12px;
+    }
+
+    th, td{
+        padding:10px;
+        text-align:left;
+        border-bottom:1px solid var(--border);
+        font-size:0.9rem;
+    }
+
+    th{
+        background:var(--surface-2);
+        color:var(--muted);
+        position:sticky;
+        top:0;
+        z-index:1;
+    }
+
+    tbody tr:hover{
+        background:rgba(15, 102, 255, 0.04);
+    }
+
+    tbody tr:nth-child(even){
+        background:rgba(247, 249, 252, 0.65);
+    }
+
+    body.dark-mode tbody tr:nth-child(even){
+        background:rgba(22, 43, 86, 0.45);
+    }
+
+    @media (max-width: 768px){
+        body{
+            padding:12px;
+        }
+
+        .top-bar{
+            align-items:flex-start;
+        }
+
+        .theme-btn{
+            width:48px;
+            height:48px;
+        }
+
+        .section-head{
+            align-items:flex-start;
+            flex-direction:column;
+        }
+    }
+</style>
+</head>
+<body>
+<!-- PASSWORD GATE START - remove this block if you don't want protection -->
+<div class="password-overlay" id="passwordOverlay">
+    <div class="password-box">
+        <h3>Access Protected</h3>
+        <p>Please enter the password to continue</p>
+        <div class="password-input-wrap">
+            <input type="password" id="passwordInput" placeholder="Enter password">
+            <button class="password-toggle" id="passwordToggle" type="button" aria-label="Show password">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </button>
+        </div>
+        <div class="password-error" id="passwordError"></div>
+        <button class="btn-primary" id="passwordSubmit" type="button">Unlock</button>
+    </div>
+</div>
+<!-- PASSWORD GATE END -->
+
+<div class="container" id="appContainer" hidden>
+    <div class="top-bar">
+        <div class="title-wrap">
+            <h1>Quality Index Calculator</h1>
+        </div>
+        <div class="header-controls">
+            <div class="clock-pill" id="clock">--:--</div>
+            <button class="theme-btn" id="themeBtn" title="Night mode">🌙</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-head">
+            <h2>Input Details</h2>
+        </div>
+        <div class="grid">
+            <div>
+                <label for="product">Product Type</label>
+                <select id="product">
+                    <option>KSFT</option>
+                    <option>DSFT</option>
+                    <option>RSFT</option>
+                </select>
+            </div>
+            <div>
+                <label for="batchNo">Batch Number</label>
+                <input type="text" id="batchNo" placeholder="Enter batch number" maxlength="30">
+            </div>
+            <div>
+                <label for="shift">Shift</label>
+                <select id="shift">
+                    <option value="">Select shift</option>
+                    <option>E</option>
+                    <option>L</option>
+                    <option>N</option>
+                </select>
+            </div>
+            <div>
+                <label for="circMean">Circ Mean</label>
+                <input type="number" step="any" id="circMean" placeholder="0.00">
+            </div>
+            <div>
+                <label for="circSD">Circ SD</label>
+                <input type="number" step="any" id="circSD" placeholder="0.00">
+            </div>
+            <div>
+                <label for="pdMean">PD Mean</label>
+                <input type="number" step="any" id="pdMean" placeholder="0.00">
+            </div>
+            <div>
+                <label for="pdSD">PD SD</label>
+                <input type="number" step="any" id="pdSD" placeholder="0.00">
+            </div>
+            <div>
+                <label for="pdMax">PD Max</label>
+                <input type="number" step="any" id="pdMax" placeholder="0.00">
+            </div>
+            <div>
+                <label for="pdMin">PD Min</label>
+                <input type="number" step="any" id="pdMin" placeholder="0.00">
+            </div>
+            <div>
+                <label for="hardMean">Hardness Mean</label>
+                <input type="number" step="any" id="hardMean" placeholder="0.00">
+            </div>
+            <div>
+                <label for="hardSD">Hardness SD</label>
+                <input type="number" step="any" id="hardSD" placeholder="0.00">
+            </div>
+            <div>
+                <label for="missingCapsule">Missing Capsule</label>
+                <input type="number" step="any" id="missingCapsule" placeholder="0.00">
+            </div>
+            <div>
+                <label for="gumLine">Gum Line Present %</label>
+                <input type="number" step="any" id="gumLine" placeholder="0.00">
+            </div>
+            <div>
+                <label for="hardOK">Hardness OK %</label>
+                <input type="number" step="any" id="hardOK" placeholder="0.00">
+            </div>
+            <div>
+                <label for="pdOK">PD OK %</label>
+                <input type="number" step="any" id="pdOK" placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="actions">
+            <div class="checkbox-row">
+                <input type="checkbox" id="confirmCheck">
+                <label for="confirmCheck" id="confirmText">I confirm all values are correct</label>
+            </div>
+            <div class="button-row">
+                <button class="btn-secondary" id="resetBtn" type="button">Reset</button>
+                <button class="btn-primary" id="addBtn" type="button">Add to Report</button>
+            </div>
+        </div>
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <div class="score-grid">
+        <div class="score-card"><div class="score-title">PD Difference</div><div class="score-value" id="s1">0/5</div></div>
+        <div class="score-card"><div class="score-title">Hardness</div><div class="score-value" id="s2">0/5</div></div>
+        <div class="score-card"><div class="score-title">Hardness OK</div><div class="score-value" id="s3">0/5</div></div>
+        <div class="score-card"><div class="score-title">Overall</div><div class="score-value" id="s4">0/5</div></div>
+        <div class="score-card"><div class="score-title">Circ Mean</div><div class="score-value" id="s5">0/5</div></div>
+        <div class="score-card"><div class="score-title">Circ SD</div><div class="score-value" id="s6">0/5</div></div>
+        <div class="score-card"><div class="score-title">PD Average</div><div class="score-value" id="s7">0/5</div></div>
+    </div>
+
+    <div class="card result">
+        <h3>QUALITY INDEX</h3>
+        <div class="qi" id="qi">0%</div>
+        <div class="total" id="total">0 / 35</div>
+        <div class="grade" id="grade">-</div>
+        <div class="progress"><div class="progress-bar blue" id="bar"></div></div>
+    </div>
+
+    <div class="card">
+        <div class="section-head">
+            <h3>Report History</h3>
+            <div class="button-row">
+                <button class="btn-secondary" id="exportBtn" type="button">Export Excel</button>
+                <button class="btn-danger" id="clearBtn" type="button">Clear History</button>
+            </div>
+        </div>
+        <div style="overflow:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date & Time</th>
+                        <th>Product</th>
+                        <th>Batch</th>
+                        <th>Shift</th>
+                        <th>Circ Mean</th>
+                        <th>Circ SD</th>
+                        <th>PD Mean</th>
+                        <th>PD OK</th>
+                        <th>Hardness Mean</th>
+                        <th>Hardness OK</th>
+                        <th>Missing Capsule</th>
+                        <th>Gum Line</th>
+                        <th>Total</th>
+                        <th>QI</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="reportBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fields = [
+        'product', 'batchNo', 'shift', 'circMean', 'circSD', 'pdMean', 'pdSD',
+        'pdMax', 'pdMin', 'hardMean', 'hardSD', 'missingCapsule', 'gumLine',
+        'hardOK', 'pdOK'
+    ];
+    const reportBody = document.getElementById('reportBody');
+    const statusMessage = document.getElementById('statusMessage');
+    const STORAGE_KEY = 'qi-report-history';
+    let reportHistory = [];
+
+    /* PASSWORD GATE START - remove this block if you don't want protection */
+    const passwordOverlay = document.getElementById('passwordOverlay');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordToggle = document.getElementById('passwordToggle');
+    const passwordError = document.getElementById('passwordError');
+    const passwordSubmit = document.getElementById('passwordSubmit');
+    const appContainer = document.getElementById('appContainer');
+
+    function unlockPage() {
+        if (passwordInput.value.trim() === '1069') {
+            passwordOverlay.style.display = 'none';
+            appContainer.hidden = false;
+            passwordError.textContent = '';
+        } else {
+            passwordError.textContent = 'Incorrect password';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+
+    const eyeOpen = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>`;
+    const eyeClosed = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3 21 21"></path>
+            <path d="M10.6 6.3A9.8 9.8 0 0 1 12 6c7 0 11 6 11 6a18.4 18.4 0 0 1-4.2 4.7"></path>
+            <path d="M6.8 8.2A17.7 17.7 0 0 0 1 12s4 7 11 7a10.7 10.7 0 0 0 4.4-1"></path>
+            <path d="M9.3 13.7a3 3 0 0 0 4.2 4.2"></path>
+        </svg>`;
+
+    passwordToggle.addEventListener('click', () => {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type = isHidden ? 'text' : 'password';
+        passwordToggle.innerHTML = isHidden ? eyeClosed : eyeOpen;
+        passwordToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
+
+    passwordSubmit.addEventListener('click', unlockPage);
+    passwordInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') unlockPage();
+    });
+    /* PASSWORD GATE END */
+
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
+    });
+
+    document.getElementById('confirmCheck').addEventListener('change', calculate);
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+    document.getElementById('addBtn').addEventListener('click', addToReport);
+    document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+    document.getElementById('clearBtn').addEventListener('click', clearHistory);
+    document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+    attachNumberInputBehavior();
+
+    function updateClock() {
+        const now = new Date();
+        const date = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+        document.getElementById('clock').textContent = `${date} • ${time}`;
+    }
+
+    setInterval(updateClock, 60000);
+    updateClock();
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        document.getElementById('themeBtn').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+    }
+
+    function attachNumberInputBehavior() {
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.step = '0.01';
+            input.setAttribute('inputmode', 'decimal');
+
+            let holdTimeout = null;
+            let holdInterval = null;
+
+            const stopHold = () => {
+                clearTimeout(holdTimeout);
+                clearInterval(holdInterval);
+                holdTimeout = null;
+                holdInterval = null;
+            };
+
+            input.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0) return;
+                const spinnerWidth = 24;
+                const isSpinnerArea = event.offsetX >= input.clientWidth - spinnerWidth;
+                if (!isSpinnerArea) return;
+
+                const direction = event.offsetY < input.clientHeight / 2 ? 1 : -1;
+                const applyStep = () => {
+                    const current = parseFloat(input.value);
+                    const base = Number.isFinite(current) ? current : 0;
+                    const nextValue = Math.round((base + direction) * 100) / 100;
+                    input.value = String(nextValue);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                };
+
+                holdTimeout = setTimeout(() => {
+                    applyStep();
+                    holdInterval = setInterval(applyStep, 90);
+                }, 400);
+
+                const cleanup = () => {
+                    stopHold();
+                    input.removeEventListener('pointerup', cleanup);
+                    input.removeEventListener('pointerleave', cleanup);
+                    input.removeEventListener('pointercancel', cleanup);
+                };
+
+                input.addEventListener('pointerup', cleanup, { once: true });
+                input.addEventListener('pointerleave', cleanup, { once: true });
+                input.addEventListener('pointercancel', cleanup, { once: true });
+            });
+        });
+    }
+
+    function loadHistory() {
+        try {
+            reportHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        } catch (e) {
+            reportHistory = [];
+        }
+        renderReport();
+    }
+
+    function saveHistory() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reportHistory));
+    }
+
+    function resetFieldStyles() {
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            el.style.border = '';
+            el.style.background = '';
+        });
+    }
+
+    function markInvalid(ids, message) {
+        resetFieldStyles();
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            el.style.border = '2px solid #dc2626';
+            el.style.background = '#fff1f2';
+        });
+        statusMessage.textContent = message;
+        return message;
+    }
+
+    function resetForm() {
+        document.getElementById('product').selectedIndex = 0;
+        document.getElementById('shift').selectedIndex = 0;
+        document.getElementById('batchNo').value = '';
+        document.getElementById('circMean').value = '';
+        document.getElementById('circSD').value = '';
+        document.getElementById('pdMean').value = '';
+        document.getElementById('pdSD').value = '';
+        document.getElementById('pdMax').value = '';
+        document.getElementById('pdMin').value = '';
+        document.getElementById('hardMean').value = '';
+        document.getElementById('hardSD').value = '';
+        document.getElementById('missingCapsule').value = '100';
+        document.getElementById('gumLine').value = '100';
+        document.getElementById('hardOK').value = '100';
+        document.getElementById('pdOK').value = '100';
+        document.getElementById('confirmCheck').checked = false;
+        resetFieldStyles();
+        statusMessage.textContent = '';
+        calculate();
+    }
+
+    function calculate() {
+        const product = document.getElementById('product').value;
+        const circMean = parseFloat(val('circMean')) || 0;
+        const circSD = parseFloat(val('circSD')) || 0;
+        const pdMean = parseFloat(val('pdMean')) || 0;
+        const pdMax = parseFloat(val('pdMax')) || 0;
+        const pdMin = parseFloat(val('pdMin')) || 0;
+        const hardMean = parseFloat(val('hardMean')) || 0;
+        const missing = parseFloat(val('missingCapsule')) || 0;
+        const gum = parseFloat(val('gumLine')) || 0;
+        const hardOK = parseFloat(val('hardOK')) || 0;
+        const pdOK = parseFloat(val('pdOK')) || 0;
+        const batchNo = val('batchNo').trim();
+        const shift = val('shift');
+        const confirm = document.getElementById('confirmCheck').checked;
+
+        if (!document.getElementById('missingCapsule').value) document.getElementById('missingCapsule').value = '100';
+        if (!document.getElementById('gumLine').value) document.getElementById('gumLine').value = '100';
+        if (!document.getElementById('hardOK').value) document.getElementById('hardOK').value = '100';
+        if (!document.getElementById('pdOK').value) document.getElementById('pdOK').value = '100';
+
+        const targetPD = product === 'KSFT' ? 30.5 : 40.2;
+        const circDev = Math.abs(24.3 - circMean);
+        const pdAvgPercent = pdMean === 0 ? 999 : (Math.abs(targetPD - (pdMean / 10)) / (pdMean / 10)) * 100;
+        const pdDiffPercent = pdMean === 0 ? 999 : ((pdMax - pdMin) / pdMean) * 100;
+
+        let score1 = 0;
+        if (pdDiffPercent < 16 && pdOK === 100) score1 = 5;
+        else if (pdDiffPercent <= 22 && pdOK === 100) score1 = 4;
+        else if (pdDiffPercent <= 28 && pdOK === 100) score1 = 3;
+        else if (pdDiffPercent < 28 && pdOK > 94.9) score1 = 2;
+        else if (pdDiffPercent < 28 && pdOK > 90) score1 = 1;
+
+        let score2 = 0;
+        if (hardMean >= 91) score2 = 5;
+        else if (hardMean >= 90) score2 = 3;
+
+        let score3 = 0;
+        if (hardOK >= 99) score3 = 5;
+        else if (hardOK >= 98) score3 = 4;
+
+        let score4 = 0;
+        if (gum === 100 && missing === 0) score4 = 5;
+        else if (missing === 0 && hardOK > 94.9) score4 = 3;
+        else if (missing === 0 && hardOK > 89.9 && hardOK < 95) score4 = 1;
+
+        let score5 = circScore(circDev);
+        let score6 = circScore(circSD);
+
+        let score7 = 0;
+        if (pdAvgPercent <= 1) score7 = 5;
+        else if (pdAvgPercent <= 2) score7 = 4;
+        else if (pdAvgPercent <= 3) score7 = 3;
+        else if (pdAvgPercent <= 4) score7 = 2;
+        else if (pdAvgPercent <= 5) score7 = 1;
+
+        show('s1', score1);
+        show('s2', score2);
+        show('s3', score3);
+        show('s4', score4);
+        show('s5', score5);
+        show('s6', score6);
+        show('s7', score7);
+
+        const total = score1 + score2 + score3 + score4 + score5 + score6 + score7;
+        const qi = Math.round((total / 35) * 100);
+        document.getElementById('qi').textContent = qi + '%';
+        document.getElementById('total').textContent = total + ' / 35';
+
+        let grade = 'Poor';
+        if (qi >= 90) grade = 'Excellent';
+        else if (qi >= 75) grade = 'Good';
+        else if (qi >= 60) grade = 'Average';
+        document.getElementById('grade').textContent = grade;
+
+        const bar = document.getElementById('bar');
+        bar.style.width = qi + '%';
+        bar.className = 'progress-bar';
+        if (qi >= 90) bar.classList.add('green');
+        else if (qi >= 75) bar.classList.add('blue');
+        else if (qi >= 60) bar.classList.add('yellow');
+        else bar.classList.add('red');
+
+        const error = validateInputs({
+            batchNo,
+            shift,
+            circMean,
+            circSD,
+            pdMean,
+            pdMax,
+            pdMin,
+            hardMean,
+            hardSD,
+            missing,
+            gum,
+            hardOK,
+            pdOK,
+            product
+        });
+
+        if (error) {
+            document.getElementById('addBtn').disabled = true;
+        } else if (!confirm) {
+            statusMessage.textContent = 'Please confirm the entry before adding it to the report.';
+            document.getElementById('addBtn').disabled = true;
+        } else {
+            statusMessage.textContent = '';
+            document.getElementById('addBtn').disabled = false;
+        }
+    }
+
+    function validateInputs(data) {
+        if (!data.batchNo) return markInvalid(['batchNo'], 'Batch number is required.');
+        if (!data.shift) return markInvalid(['shift'], 'Please select a shift.');
+        if (data.pdMax < data.pdMin) return markInvalid(['pdMax', 'pdMin'], 'PD Max cannot be less than PD Min.');
+        if (data.missing < 0 || data.missing > 100) return markInvalid(['missingCapsule'], 'Missing Capsule must be between 0 and 100.');
+        if (data.gum < 0 || data.gum > 100) return markInvalid(['gumLine'], 'Gum Line must be between 0 and 100.');
+        if (data.hardOK < 0 || data.hardOK > 100) return markInvalid(['hardOK'], 'Hardness OK must be between 0 and 100.');
+        if (data.pdOK < 0 || data.pdOK > 100) return markInvalid(['pdOK'], 'PD OK must be between 0 and 100.');
+        if (data.circSD < 0 || data.hardSD < 0 || data.pdSD < 0) return markInvalid(['circSD', 'hardSD', 'pdSD'], 'SD values cannot be negative.');
+        resetFieldStyles();
+        return '';
+    }
+
+    function addToReport() {
+        const data = {
+            product: val('product'),
+            batchNo: val('batchNo').trim(),
+            shift: val('shift'),
+            circMean: parseFloat(val('circMean')) || 0,
+            circSD: parseFloat(val('circSD')) || 0,
+            pdMean: parseFloat(val('pdMean')) || 0,
+            pdSD: parseFloat(val('pdSD')) || 0,
+            pdMax: parseFloat(val('pdMax')) || 0,
+            pdMin: parseFloat(val('pdMin')) || 0,
+            hardMean: parseFloat(val('hardMean')) || 0,
+            hardSD: parseFloat(val('hardSD')) || 0,
+            missing: parseFloat(val('missingCapsule')) || 0,
+            gum: parseFloat(val('gumLine')) || 0,
+            hardOK: parseFloat(val('hardOK')) || 0,
+            pdOK: parseFloat(val('pdOK')) || 0,
+        };
+
+        const error = validateInputs(data);
+        if (error) return;
+        if (!document.getElementById('confirmCheck').checked) {
+            statusMessage.textContent = 'Please confirm the entry before adding it to the report.';
+            return;
+        }
+
+        const duplicate = reportHistory.some(item => item.product === data.product && item.batchNo === data.batchNo && item.shift === data.shift);
+        if (duplicate) {
+            markInvalid(['batchNo', 'shift'], 'This batch and shift already exists in the report history.');
+            return;
+        }
+
+        const report = {
+            ...data,
+            score1: getScore('s1'),
+            score2: getScore('s2'),
+            score3: getScore('s3'),
+            score4: getScore('s4'),
+            score5: getScore('s5'),
+            score6: getScore('s6'),
+            score7: getScore('s7'),
+            total: document.getElementById('total').textContent,
+            qi: document.getElementById('qi').textContent,
+            grade: document.getElementById('grade').textContent,
+            stamp: new Date().toLocaleString()
+        };
+
+        reportHistory.push(report);
+        saveHistory();
+        renderReport();
+        statusMessage.textContent = 'Report added successfully.';
+        document.getElementById('confirmCheck').checked = false;
+        calculate();
+    }
+
+    function renderReport() {
+        reportBody.innerHTML = '';
+        reportHistory.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.stamp}</td>
+                <td>${item.product}</td>
+                <td>${item.batchNo}</td>
+                <td>${item.shift}</td>
+                <td>${item.circMean.toFixed(2)}</td>
+                <td>${item.circSD.toFixed(2)}</td>
+                <td>${item.pdMean.toFixed(2)}</td>
+                <td>${item.pdOK.toFixed(2)}%</td>
+                <td>${item.hardMean.toFixed(2)}</td>
+                <td>${item.hardOK.toFixed(2)}%</td>
+                <td>${item.missing.toFixed(2)}</td>
+                <td>${item.gum.toFixed(2)}%</td>
+                <td>${item.total}</td>
+                <td>${item.qi}</td>
+                <td>${item.grade}</td>
+            `;
+            reportBody.appendChild(row);
+        });
+    }
+
+    function exportToExcel() {
+        if (!reportHistory.length) {
+            statusMessage.textContent = 'No history available to export.';
+            return;
+        }
+        if (typeof XLSX === 'undefined') {
+            statusMessage.textContent = 'Excel library did not load.';
+            return;
+        }
+
+        const headers = [
+            'Date & Time', 'Product', 'Batch', 'Shift', 'Circ Mean', 'Circ SD', 'PD Mean', 'PD SD',
+            'PD Max', 'PD Min', 'Hardness Mean', 'Hardness SD', 'Missing Capsule', 'Gum Line',
+            'Hardness OK', 'PD OK', 'PD Difference', 'Hardness', 'Hardness OK', 'Overall',
+            'Circ Mean Score', 'Circ SD Score', 'PD Average', 'Total', 'QI', 'Grade'
+        ];
+        const rows = reportHistory.map(item => [
+            item.stamp,
+            item.product,
+            item.batchNo,
+            item.shift,
+            item.circMean.toFixed(2),
+            item.circSD.toFixed(2),
+            item.pdMean.toFixed(2),
+            item.pdSD.toFixed(2),
+            item.pdMax.toFixed(2),
+            item.pdMin.toFixed(2),
+            item.hardMean.toFixed(2),
+            item.hardSD.toFixed(2),
+            item.missing.toFixed(2),
+            item.gum.toFixed(2),
+            item.hardOK.toFixed(2),
+            item.pdOK.toFixed(2),
+            item.score1,
+            item.score2,
+            item.score3,
+            item.score4,
+            item.score5,
+            item.score6,
+            item.score7,
+            item.total,
+            item.qi,
+            item.grade
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'QI Report');
+        const fileName = `QI_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        statusMessage.textContent = 'Excel report downloaded.';
+    }
+
+    function clearHistory() {
+        if (!reportHistory.length) {
+            statusMessage.textContent = 'No history to be cleared.';
+            return;
+        }
+
+        const confirmed = confirm('Clear History?');
+        if (!confirmed) return;
+
+        reportHistory = [];
+        saveHistory();
+        renderReport();
+        statusMessage.textContent = 'Report history cleared.';
+    }
+
+    function getScore(id) {
+        return parseInt(document.getElementById(id).textContent.split('/')[0], 10) || 0;
+    }
+
+    function circScore(v) {
+        if (v < 0.04) return 5;
+        if (v < 0.051) return 4;
+        if (v < 0.061) return 3;
+        if (v < 0.071) return 2;
+        if (v < 0.081) return 1;
+        return 0;
+    }
+
+    function val(id) {
+        return document.getElementById(id).value;
+    }
+
+    function show(id, value) {
+        document.getElementById(id).textContent = value + '/5';
+    }
+
+    loadHistory();
+    resetForm();
+    passwordInput.focus();
+</script>
+</body>
+</html>
